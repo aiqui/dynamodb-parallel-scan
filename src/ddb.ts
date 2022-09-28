@@ -8,28 +8,47 @@ import type {
 import {BatchWriteCommand, DynamoDBDocumentClient, ScanCommand} from '@aws-sdk/lib-dynamodb';
 
 const isTest = process.env.JEST_WORKER_ID;
-const ddbv3Client = new DynamoDBClient({
-  ...(isTest && {
-    endpoint: 'http://localhost:8000',
-    tls: false,
-    region: 'local-env',
-    credentials: {
-      accessKeyId: 'fakeMyKeyId',
-      secretAccessKey: 'fakeSecretAccessKey',
-    },
-  }),
-});
-const ddbv3DocClient = DynamoDBDocumentClient.from(ddbv3Client);
+
+let ddbv3ClientConfig: Object = isTest ? {
+  endpoint: 'http://localhost:8000',
+  tls: false,
+  region: 'local-env',
+  credentials: {
+    accessKeyId: 'fakeMyKeyId',
+    secretAccessKey: 'fakeSecretAccessKey',
+  },
+} : {};
+
+export function setDbConfig(config: Object) {
+  ddbv3ClientConfig = config;
+}
+
+let ddbv3Client: DynamoDBClient;
+let ddbv3DocClient: DynamoDBDocumentClient;
+
+function _getDdbv3Client(): DynamoDBClient {
+  if (!ddbv3Client) {
+    ddbv3Client = new DynamoDBClient(ddbv3ClientConfig);
+  }
+  return ddbv3Client;
+}
+
+function _getDdbv3DocClient(): DynamoDBDocumentClient {
+  if (!ddbv3DocClient) {
+    ddbv3DocClient = DynamoDBDocumentClient.from(_getDdbv3Client());
+  }
+  return ddbv3DocClient;
+}
 
 export function scan(params: ScanCommandInput): Promise<ScanCommandOutput> {
   const command = new ScanCommand(params);
 
-  return ddbv3Client.send(command);
+  return _getDdbv3Client().send(command);
 }
 
 export async function getTableItemsCount(tableName: string): Promise<number> {
   const command = new DescribeTableCommand({TableName: tableName});
-  const resp = await ddbv3Client.send(command);
+  const resp = await _getDdbv3Client().send(command);
 
   return resp.Table.ItemCount;
 }
@@ -63,5 +82,5 @@ function batchWrite(
     ReturnItemCollectionMetrics: 'NONE',
   });
 
-  return ddbv3DocClient.send(command);
+  return _getDdbv3DocClient().send(command);
 }
