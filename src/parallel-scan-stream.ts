@@ -5,7 +5,7 @@ import getDebugger from 'debug';
 import {Readable} from 'stream';
 import type {ScanCommandInput} from '@aws-sdk/lib-dynamodb';
 import type {ScanCommandOutput} from '@aws-sdk/lib-dynamodb';
-import {getTableItemsCount, scan} from './ddb';
+import {setDbConfig, getTableItemsCount, scan} from './ddb';
 import {Blocker} from './blocker';
 
 const debug = getDebugger('ddb-parallel-scan');
@@ -20,8 +20,14 @@ export async function parallelScanAsStream(
     concurrency,
     chunkSize,
     highWaterMark = Number.MAX_SAFE_INTEGER,
-  }: {concurrency: number; chunkSize: number; highWaterMark?: number}
+    dbConfig
+  }: {concurrency: number; chunkSize: number; highWaterMark?: number, dbConfig?: object}
 ): Promise<Readable> {
+
+  if (dbConfig) {
+    setDbConfig(dbConfig);
+  }
+
   totalTableItemsCount = await getTableItemsCount(scanParams.TableName);
 
   const segments: number[] = times(concurrency);

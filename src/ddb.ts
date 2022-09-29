@@ -9,7 +9,7 @@ import {BatchWriteCommand, DynamoDBDocumentClient, ScanCommand} from '@aws-sdk/l
 
 const isTest = process.env.JEST_WORKER_ID;
 
-let ddbv3ClientConfig: Object = isTest ? {
+let ddbv3ClientConfig: object = isTest ? {
   endpoint: 'http://localhost:8000',
   tls: false,
   region: 'local-env',
@@ -19,7 +19,7 @@ let ddbv3ClientConfig: Object = isTest ? {
   },
 } : {};
 
-export function setDbConfig(config: Object) {
+export function setDbConfig(config: object) {
   ddbv3ClientConfig = config;
 }
 

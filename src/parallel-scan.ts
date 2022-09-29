@@ -2,7 +2,7 @@ import cloneDeep from 'lodash.clonedeep';
 import times from 'lodash.times';
 import getDebugger from 'debug';
 import type {ScanCommandInput, ScanCommandOutput} from '@aws-sdk/lib-dynamodb';
-import {getTableItemsCount, scan} from './ddb';
+import {setDbConfig, getTableItemsCount, scan} from './ddb';
 
 const debug = getDebugger('ddb-parallel-scan');
 
@@ -12,8 +12,13 @@ let totalFetchedItemsCount = 0;
 
 export async function parallelScan(
   scanParams: ScanCommandInput,
-  {concurrency, config}: {concurrency: number, config?: object}
+  {concurrency, dbConfig}: {concurrency: number, dbConfig?: object}
 ): Promise<ScanCommandOutput['Items']> {
+
+  if (dbConfig) {
+    setDbConfig(dbConfig);
+  }
+
   totalTableItemsCount = await getTableItemsCount(scanParams.TableName);
 
   const segments: number[] = times(concurrency);
